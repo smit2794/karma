@@ -80,6 +80,7 @@ export default function AdminDashboard() {
       lat: v.lat,
       lng: v.lng,
       title: v.name,
+      color: v.riskLevel === 'High' ? '#D92B2B' : v.riskLevel === 'Medium' ? '#F9C642' : '#0B6CC4',
       popupContent: (
         <div className="font-sans text-sm p-1">
           <p className="font-bold text-base text-slate-800">{v.name}</p>

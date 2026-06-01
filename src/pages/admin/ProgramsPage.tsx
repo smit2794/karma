@@ -230,7 +230,7 @@ function CreateProgramModal({ open, onClose, onSave, coordinators }: {
 
 /* ── Main Page ── */
 export default function ProgramsPage() {
-  const { programs, coordinators, villages, workers, children, addProgram } = useAppContext();
+  const { role, programs, coordinators, villages, workers, children, addProgram } = useAppContext();
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -343,11 +343,11 @@ export default function ProgramsPage() {
     const progress = now >= end ? 100 : now <= start ? 0 : Math.round(((now - start) / (end - start)) * 100);
 
     return (
-      <div className="flex flex-col max-h-[88vh] overflow-hidden rounded-3xl">
+      <div className="flex flex-col max-h-[88vh] overflow-hidden rounded-3xl" style={{ background: '#F4F8FF' }}>
         {/* Unified Premium Hero Header */}
         <div
           className="shrink-0 relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #0D2244 0%, #0B6CC4 45%, #5DBCEB 75%, #F28C28 100%)', padding: '1.5rem' }}
+          style={{ background: 'linear-gradient(135deg, #091E3A 0%, #0B6CC4 45%, #5DBCEB 75%, #F28C28 100%)', padding: '1.5rem' }}
         >
           {/* Decorative rings */}
           <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full opacity-10" style={{ background: '#F9C642' }} />
@@ -360,7 +360,7 @@ export default function ProgramsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-black text-white" style={{ fontFamily: 'Outfit,sans-serif' }}>{prog.name}</h2>
-                <p className="text-white/70 text-xs mt-0.5">{prog.description || "No description provided."}</p>
+                <p className="text-white/80 text-xs mt-0.5">{prog.description || "No description provided."}</p>
               </div>
             </div>
             <span className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold border mt-1"
@@ -370,11 +370,8 @@ export default function ProgramsPage() {
           </div>
         </div>
 
-        {/* Unified Soft Sky-Blue Scrollable Body */}
-        <div
-          className="overflow-y-auto flex-1 p-5 space-y-4"
-          style={{ background: '#F4F8FF', maxHeight: 'calc(88vh - 100px)' }}
-        >
+        {/* Unified Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Progress bar */}
           <SectionCard title="Timeline Progress" icon={Calendar} color="#10b981">
             <div className="flex items-center justify-between mb-2">
@@ -521,19 +518,21 @@ export default function ProgramsPage() {
       />
 
       {/* ── FAB Button ── */}
-      <motion.button
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.94 }}
-        onClick={() => setShowCreate(true)}
-        className="fixed bottom-8 right-8 z-40 flex items-center gap-2 px-5 py-4 rounded-2xl text-white font-bold text-sm shadow-xl"
-        style={{
-          background: 'linear-gradient(135deg,#F28C28,#F9C642)',
-          boxShadow: '0 8px 32px rgba(242,140,40,0.45), 0 2px 8px rgba(0,0,0,0.12)',
-        }}
-      >
-        <Plus size={20} strokeWidth={2.5} />
-        <span className="hidden sm:inline">New Program</span>
-      </motion.button>
+      {role === "admin" && (
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.94 }}
+          onClick={() => setShowCreate(true)}
+          className="fixed bottom-8 right-8 z-40 flex items-center gap-2 px-5 py-4 rounded-2xl text-white font-bold text-sm shadow-xl"
+          style={{
+            background: 'linear-gradient(135deg,#F28C28,#F9C642)',
+            boxShadow: '0 8px 32px rgba(242,140,40,0.45), 0 2px 8px rgba(0,0,0,0.12)',
+          }}
+        >
+          <Plus size={20} strokeWidth={2.5} />
+          <span className="hidden sm:inline">New Program</span>
+        </motion.button>
+      )}
     </motion.div>
   );
 }

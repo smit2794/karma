@@ -99,38 +99,20 @@ export default function CoordinatorDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Coverage Map */}
-        <motion.div variants={item} className="lg:col-span-2 h-[400px]">
-          <Card className="h-full border-none shadow-md overflow-hidden dark:bg-slate-900 flex flex-col">
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MapPin size={16} className="k-text-primary" /> My Village Coverage
-              </CardTitle>
-            </CardHeader>
-            <div className="flex-1 p-0 relative z-0">
-              {myVillages.length > 0 ? (
-                <MapComponent markers={mapMarkers} center={[myVillages[0].lat, myVillages[0].lng]} zoom={9} className="h-full w-full rounded-none" />
-              ) : (
-                <div className="h-full flex items-center justify-center k-text-muted bg-slate-100 dark:bg-slate-800">No villages assigned</div>
-              )}
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Action Items */}
-        <motion.div variants={item} className="flex flex-col gap-4">
-          <Card className="border-none shadow-md dark:bg-slate-900 flex-1">
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Action Items - Follow-ups */}
+        <motion.div variants={item}>
+          <Card className="h-full border-none shadow-md dark:bg-slate-900 flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <CalendarHeart size={16} className="k-text-secondary" /> Upcoming Follow-ups
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
               {upcomingVisits.length > 0 ? (
                 <div className="space-y-3">
                   {upcomingVisits.slice(0, 3).map(child => (
-                    <div key={child.id} className="flex items-center justify-between p-2 rounded-md k-bg-primary-soft k-border-primary">
+                    <div key={child.id} className="flex items-center justify-between p-2.5 rounded-xl k-bg-primary-soft k-border-primary">
                       <div>
                         <p className="text-sm font-medium">{child.name}</p>
                         <p className="text-xs k-text-muted">{myVillages.find(v=>v.id===child.villageId)?.name}</p>
@@ -144,18 +126,21 @@ export default function CoordinatorDashboard() {
               )}
             </CardContent>
           </Card>
+        </motion.div>
 
-          <Card className="border-none shadow-md k-bg-primary k-text-primary-foreground dark:bg-primary/20 dark:text-primary dark:border-primary/30">
-            <CardContent className="p-4 sm:p-6">
-              <h3 className="font-bold text-lg mb-2 text-white">Quick Actions</h3>
-              <div className="space-y-2">
-                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40">
+        {/* Action Items - Quick Actions */}
+        <motion.div variants={item}>
+          <Card className="h-full border-none shadow-md k-bg-primary k-text-primary-foreground dark:bg-primary/20 dark:text-primary dark:border-primary/30 flex flex-col justify-center">
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-4 text-white">Quick Actions</h3>
+              <div className="space-y-3">
+                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40 h-11">
                   Log New Visit <ArrowRight size={16} />
                 </Button>
-                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40">
+                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40 h-11">
                   Update Vaccinations <ArrowRight size={16} />
                 </Button>
-                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40">
+                <Button variant="secondary" className="w-full justify-between dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/40 h-11">
                   Register Child <ArrowRight size={16} />
                 </Button>
               </div>

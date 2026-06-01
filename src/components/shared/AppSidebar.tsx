@@ -21,23 +21,23 @@ import { Button } from "@/components/ui/button";
 const adminMenu = [
   { title: "Dashboard",        url: "/admin",              icon: LayoutDashboard, accent: "#5DBCEB" },
   { title: "Children",         url: "/admin/children",     icon: Users,           accent: "#F28C28" },
-  { title: "Programs",         url: "/admin/programs",     icon: Map,             accent: "#10b981" },
-  { title: "Food Distribution",url: "/admin/food",         icon: Utensils,        accent: "#F9C642" },
-  { title: "Inventory",        url: "/admin/inventory",    icon: Package,         accent: "#a78bfa" },
-  { title: "Coordinators",     url: "/admin/coordinators", icon: ShieldCheck,     accent: "#5DBCEB" },
-  { title: "Workers",          url: "/admin/workers",      icon: HeartPulse,      accent: "#f472b6" },
+  { title: "Programs",         url: "/admin/programs",     icon: Map,             accent: "#5DBCEB" },
+  { title: "Food Distribution",url: "/admin/food",         icon: Utensils,        accent: "#F28C28" },
+  { title: "Inventory",        url: "/admin/inventory",    icon: Package,         accent: "#5DBCEB" },
+  { title: "Coordinators",     url: "/admin/coordinators", icon: ShieldCheck,     accent: "#F28C28" },
+  { title: "Workers",          url: "/admin/workers",      icon: HeartPulse,      accent: "#5DBCEB" },
   { title: "Events",           url: "/admin/events",       icon: Calendar,        accent: "#F28C28" },
-  { title: "Analysis",         url: "/admin/analysis",     icon: PieChart,        accent: "#10b981" },
-  { title: "Reports",          url: "/admin/reports",      icon: FileText,        accent: "#F9C642" },
+  { title: "Analysis",         url: "/admin/analysis",     icon: PieChart,        accent: "#5DBCEB" },
+  { title: "Reports",          url: "/admin/reports",      icon: FileText,        accent: "#F28C28" },
 ];
 
 const coordinatorMenu = [
   { title: "Dashboard",        url: "/coordinator",            icon: LayoutDashboard, accent: "#5DBCEB" },
   { title: "Children",         url: "/coordinator/children",   icon: Users,           accent: "#F28C28" },
-  { title: "Add Child",        url: "/coordinator/add-child",  icon: UserPlus,        accent: "#10b981" },
-  { title: "Programs",         url: "/coordinator/programs",   icon: Map,             accent: "#F9C642" },
-  { title: "Food Distribution",url: "/coordinator/food",       icon: Utensils,        accent: "#a78bfa" },
-  { title: "Inventory",        url: "/coordinator/inventory",  icon: Package,         accent: "#f472b6" },
+  { title: "Add Child",        url: "/coordinator/add-child",  icon: UserPlus,        accent: "#5DBCEB" },
+  { title: "Programs",         url: "/coordinator/programs",   icon: Map,             accent: "#F28C28" },
+  { title: "Food Distribution",url: "/coordinator/food",       icon: Utensils,        accent: "#5DBCEB" },
+  { title: "Inventory",        url: "/coordinator/inventory",  icon: Package,         accent: "#F28C28" },
   { title: "Workers",          url: "/coordinator/workers",    icon: HeartPulse,      accent: "#5DBCEB" },
   { title: "Profile",          url: "/coordinator/profile",    icon: UserCircle,      accent: "#F28C28" },
 ];
@@ -62,11 +62,11 @@ export function AppSidebar() {
       collapsible="icon"
       className="border-none overflow-hidden shrink-0"
       style={{
-        background: 'linear-gradient(180deg, #0D2244 0%, #0B3D78 55%, #0D2244 100%)',
+        background: 'linear-gradient(185deg, #091E3A 0%, #0B6CC4 70%, #F28C28 100%)',
         margin: '0.75rem 0 0.75rem 0.75rem',
         borderRadius: '1.25rem',
         height: 'calc(100vh - 1.5rem)',
-        boxShadow: '4px 0 32px rgba(13,34,68,0.4), 0 0 0 1px rgba(255,255,255,0.04)',
+        boxShadow: '4px 0 32px rgba(13,34,68,0.45), 0 0 0 1px rgba(255,255,255,0.06)',
       }}
     >
       {/* ── Logo ── */}
