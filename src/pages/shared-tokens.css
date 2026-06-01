@@ -1,0 +1,36 @@
+/* === SHARED KARMA BRAND TOKENS — imported by all pages === */
+
+.k-text-primary      { color: #5DBCEB !important; }
+.k-text-secondary    { color: #0B6CC4 !important; }
+.k-text-accent       { color: #F28C28 !important; }
+.k-text-warning      { color: #d97706 !important; }
+.k-text-yellow       { color: #F9C642 !important; }
+.k-text-destructive  { color: #D92B2B !important; }
+.k-text-success      { color: #10b981 !important; }
+.k-text-muted        { color: #64748b !important; }
+.k-text-dark         { color: #0D2244 !important; }
+
+.k-bg-primary        { background-color: #5DBCEB !important; }
+.k-bg-secondary      { background-color: #0B6CC4 !important; }
+.k-bg-accent         { background-color: #F28C28 !important; }
+.k-bg-warning        { background-color: #F9C642 !important; }
+.k-bg-destructive    { background-color: #D92B2B !important; }
+.k-bg-success        { background-color: #10b981 !important; }
+
+.k-bg-primary-soft      { background-color: rgba(93,188,235,0.10) !important; }
+.k-bg-secondary-soft    { background-color: rgba(11,108,196,0.09) !important; }
+.k-bg-accent-soft       { background-color: rgba(242,140,40,0.09) !important; }
+.k-bg-warning-soft      { background-color: rgba(249,198,66,0.13) !important; }
+.k-bg-destructive-soft  { background-color: rgba(217,43,43,0.08)  !important; }
+.k-bg-success-soft      { background-color: rgba(16,185,129,0.09) !important; }
+
+.k-border-primary     { border-color: rgba(93,188,235,0.40)  !important; }
+.k-border-secondary   { border-color: rgba(11,108,196,0.35)  !important; }
+.k-border-accent      { border-color: rgba(242,140,40,0.40)  !important; }
+.k-border-warning     { border-color: rgba(249,198,66,0.45)  !important; }
+.k-border-destructive { border-color: rgba(217,43,43,0.35)   !important; }
+.k-border-success     { border-color: rgba(16,185,129,0.35)  !important; }
+
+.k-card-bg     { background: rgba(255,255,255,0.88) !important; backdrop-filter: blur(14px) !important; }
+.k-card-border { border-color: rgba(255,255,255,0.65) !important; }
+.k-page-bg     { background: transparent !important; }

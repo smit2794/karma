@@ -1,40 +1,62 @@
-import { Users, MapPin, AlertTriangle, HeartPulse, ShieldCheck, Box, Calendar, CheckCircle2 } from "lucide-react";
+import { Users, MapPin, ShieldCheck, Box, TrendingUp, Activity } from "lucide-react";
 import { useAppContext } from "@/store";
-import { StatCard } from "@/components/shared/StatCard";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, Bar, 
-  PieChart, Pie, Cell, 
-  LineChart, Line, AreaChart, Area,
+  AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, Legend 
+  ResponsiveContainer
 } from "recharts";
 import { motion, Variants } from "framer-motion";
+import { MapComponent, MapMarker } from "@/components/shared/MapComponent";
+import { Badge } from "@/components/ui/badge";
 import "./AdminDashboard.css";
 
 const COLORS = {
-  Primary: "#0B6CC4",     // Karma Primary Blue
-  Secondary: "#5DBCEB",   // Karma Light Blue
-  Accent: "#F28C28",      // Karma Orange
-  Destructive: "#D92B2B", // Karma Alert Red
-  Success: "#10b981",     // Green (keep default success)
-  Warning: "#F9C642",     // Karma Golden Yellow
-  Muted: "#94a3b8"        // Slate
+  Primary: "#0B6CC4",
+  Secondary: "#5DBCEB",
+  Accent: "#F28C28",
+  Destructive: "#D92B2B",
+  Success: "#10b981",
+  Warning: "#F9C642",
+  Muted: "#94a3b8"
+};
+
+const container: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
+};
+const item: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 280, damping: 22 } }
+};
+
+// Custom tooltip
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 backdrop-blur-xl border border-white/60 rounded-2xl p-3 shadow-xl text-sm">
+        <p className="font-semibold text-slate-700 mb-1">{label}</p>
+        {payload.map((p: any, i: number) => (
+          <p key={i} style={{ color: p.color }} className="font-bold">{p.name}: {p.value}</p>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export default function AdminDashboard() {
-  const { 
-    children, coordinators, workers, foodDistribution, 
-    villages, programs, events, inventory 
-  } = useAppContext();
+  const { children, coordinators, workers, foodDistribution, villages, programs, events, inventory } = useAppContext();
 
-  // 12. NGO Impact Summary (KPIs)
   const totalChildren = children.length;
   const totalVillages = villages.length;
   const totalFoodDist = foodDistribution.reduce((acc, f) => acc + f.quantity, 0);
   const totalWorkers = workers.length;
+  const totalCoordinators = coordinators.length;
+  const activePrograms = programs.filter(p => p.status === "Ongoing").length;
 
-  // 1. Children by District (Bar Chart)
+  // Children by District
   const distMap: Record<string, number> = {};
   children.forEach(c => {
     const dist = villages.find(v => v.id === c.villageId)?.district || "Unknown";
@@ -42,30 +64,7 @@ export default function AdminDashboard() {
   });
   const childrenByDistrict = Object.keys(distMap).map(k => ({ name: k, count: distMap[k] }));
 
-  // 2. Nutrition Status Distribution (Pie Chart)
-  const nutritionData = [
-    { name: "Healthy", value: children.filter(c => c.health.nutritionStatus === "Healthy").length, color: COLORS.Success },
-    { name: "Malnourished", value: children.filter(c => c.health.nutritionStatus === "Malnourished").length, color: COLORS.Warning },
-    { name: "Severely Malnourished", value: children.filter(c => c.health.nutritionStatus === "Severely Malnourished").length, color: COLORS.Destructive },
-  ];
-
-  // 3. Vaccination Status (Donut Chart)
-  let vaxCompleted = 0; let vaxPending = 0; let vaxMissed = 0;
-  children.forEach(c => {
-    c.vaccinations.forEach(v => {
-      if(v.status === "Completed") vaxCompleted++;
-      else if(v.status === "Pending") vaxPending++;
-      else if(v.status === "Missed") vaxMissed++;
-    });
-  });
-  const vaxData = [
-    { name: "Completed", value: vaxCompleted, color: COLORS.Success },
-    { name: "Pending", value: vaxPending, color: COLORS.Warning },
-    { name: "Missed", value: vaxMissed, color: COLORS.Destructive },
-  ];
-
-  // 4. Food Distribution Trend (Line Chart)
-  // Mock grouping by month for display purposes (using static dates from mockData)
+  // Food Trend
   const foodTrendMap: Record<string, number> = {};
   foodDistribution.forEach(f => {
     const d = new Date(f.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
@@ -73,373 +72,372 @@ export default function AdminDashboard() {
   });
   const foodTrendData = Object.keys(foodTrendMap).sort().map(k => ({ date: k, quantity: foodTrendMap[k] }));
 
-  // 5. Program Progress Overview (Bar Chart)
-  const progData = [
-    { name: "Completed", value: programs.filter(p => p.status === "Completed").length, fill: COLORS.Success },
-    { name: "Ongoing", value: programs.filter(p => p.status === "Ongoing").length, fill: COLORS.Primary },
-    { name: "Planned", value: programs.filter(p => p.status === "Planned").length, fill: COLORS.Warning },
-  ];
-
-  // 6. Coordinator Performance Ranking (Horizontal Bar)
-  const coordData = coordinators.map(c => {
-    const kids = children.filter(ch => ch.coordinatorId === c.id).length;
-    return { name: c.name.split(" ")[0], children: kids };
-  }).sort((a,b) => b.children - a.children);
-
-  // 7. Worker Category Distribution (Pie Chart)
-  const catMap: Record<string, number> = {};
-  workers.forEach(w => {
-    // Simplify names for chart fitting
-    const n = w.category.replace(" Worker", "").replace(" & Child Development", " Dev");
-    catMap[n] = (catMap[n] || 0) + 1;
+  // Map markers
+  const mapMarkers: MapMarker[] = villages.map(v => {
+    const vChildrenCount = children.filter(c => c.villageId === v.id).length;
+    return {
+      id: v.id,
+      lat: v.lat,
+      lng: v.lng,
+      title: v.name,
+      popupContent: (
+        <div className="font-sans text-sm p-1">
+          <p className="font-bold text-base text-slate-800">{v.name}</p>
+          <p className="text-slate-500 text-xs mb-2">{v.district} District</p>
+          <p className="text-slate-700">Children: <span className="font-semibold">{vChildrenCount}</span></p>
+          <span
+            className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold"
+            style={{
+              background: v.riskLevel === 'High' ? 'rgba(217,43,43,0.1)' : v.riskLevel === 'Medium' ? 'rgba(249,198,66,0.15)' : 'rgba(11,108,196,0.1)',
+              color: v.riskLevel === 'High' ? '#991b1b' : v.riskLevel === 'Medium' ? '#92400e' : '#1e40af'
+            }}
+          >
+            {v.riskLevel} Risk
+          </span>
+        </div>
+      )
+    };
   });
-  const workerCatData = Object.keys(catMap).map(k => ({ name: k, value: catMap[k] }));
-  const workerColors = [COLORS.Primary, COLORS.Accent, COLORS.Secondary, COLORS.Warning, COLORS.Destructive, COLORS.Success];
 
-  // 8. Village Risk Level Distribution (Donut Chart)
-  const villageRiskData = [
-    { name: "Low", value: villages.filter(v => v.riskLevel === "Low").length, color: COLORS.Success },
-    { name: "Medium", value: villages.filter(v => v.riskLevel === "Medium").length, color: COLORS.Warning },
-    { name: "High", value: villages.filter(v => v.riskLevel === "High").length, color: COLORS.Destructive },
+  const kpiCards = [
+    {
+      label: "Children Monitored",
+      value: totalChildren,
+      icon: Users,
+      gradient: "linear-gradient(135deg, #0B6CC4 0%, #5DBCEB 100%)",
+      lightBg: "rgba(11,108,196,0.08)",
+      change: "+12%"
+    },
+    {
+      label: "Villages Reached",
+      value: totalVillages,
+      icon: MapPin,
+      gradient: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+      lightBg: "rgba(16,185,129,0.08)",
+      change: "+5%"
+    },
+    {
+      label: "Food Distributed",
+      value: `${totalFoodDist} u`,
+      icon: Box,
+      gradient: "linear-gradient(135deg, #F28C28 0%, #F9C642 100%)",
+      lightBg: "rgba(242,140,40,0.08)",
+      change: "+8%"
+    },
+    {
+      label: "Field Workers",
+      value: totalWorkers,
+      icon: Activity,
+      gradient: "linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%)",
+      lightBg: "rgba(167,139,250,0.08)",
+      change: "Stable"
+    },
+    {
+      label: "Coordinators",
+      value: totalCoordinators,
+      icon: ShieldCheck,
+      gradient: "linear-gradient(135deg, #f472b6 0%, #fb923c 100%)",
+      lightBg: "rgba(244,114,182,0.08)",
+      change: "Stable"
+    },
+    {
+      label: "Active Programs",
+      value: activePrograms,
+      icon: TrendingUp,
+      gradient: "linear-gradient(135deg, #D92B2B 0%, #ef4444 100%)",
+      lightBg: "rgba(217,43,43,0.08)",
+      change: "+2"
+    },
   ];
 
-  // 9. Follow-Up Completion Rate (Gauge Chart)
-  let totalVisits = 0; let completedVisits = 0;
-  children.forEach(c => {
-    c.visits.forEach(v => {
-      totalVisits++;
-      if(v.status === "Completed") completedVisits++;
-    });
-  });
-  const visitRate = totalVisits === 0 ? 0 : Math.round((completedVisits/totalVisits)*100);
-  const visitGaugeData = [
-    { name: "Completed", value: visitRate, color: COLORS.Primary },
-    { name: "Remaining", value: 100 - visitRate, color: COLORS.Muted }
-  ];
-
-  // 10. Inventory Health (Gauge Chart)
-  const healthyInv = inventory.filter(i => i.status === "In Stock").length;
-  const invRate = inventory.length === 0 ? 0 : Math.round((healthyInv/inventory.length)*100);
-  const invGaugeData = [
-    { name: "Healthy", value: invRate, color: COLORS.Success },
-    { name: "Low/Out", value: 100 - invRate, color: COLORS.Destructive }
-  ];
-
-  // 11. Event Participation Trend (Line Chart)
-  const eventTrendMap: Record<string, number> = {};
-  events.forEach(e => {
-    const d = new Date(e.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    eventTrendMap[d] = (eventTrendMap[d] || 0) + e.childrenAttended;
-  });
-  const eventTrendData = Object.keys(eventTrendMap).sort().map(k => ({ date: k, attendees: eventTrendMap[k] }));
-
-
-  const container: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-  const item: Variants = {
-    hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  const glassCard = {
+    background: 'rgba(255,255,255,0.8)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255,255,255,0.6)',
+    boxShadow: '0 4px 20px rgba(11,108,196,0.06)',
+    borderRadius: '1.25rem'
   };
 
   return (
-    <motion.div className="space-y-6 pb-12 k-page-bg" variants={container} initial="hidden" animate="show">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight k-text-primary">NGO Analytics & Insights</h2>
-        <p className="k-text-muted">Comprehensive overview of Karma Foundation's operational impact.</p>
+    <motion.div className="space-y-6 pb-12" variants={container} initial="hidden" animate="show">
+
+      {/* Hero Banner */}
+      <motion.div
+        variants={item}
+        className="relative overflow-hidden rounded-3xl p-6 md:p-8 text-white"
+        style={{
+          background: 'linear-gradient(135deg, #0D1B3E 0%, #1a3a7a 50%, #0B6CC4 100%)',
+          boxShadow: '0 20px 60px rgba(13,27,62,0.35)'
+        }}
+      >
+        {/* Decorative circles */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full opacity-10" style={{ background: '#5DBCEB' }} />
+        <div className="absolute right-32 -bottom-12 w-40 h-40 rounded-full opacity-10" style={{ background: '#F28C28' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full opacity-5" style={{ background: '#fff', transform: 'translate(-30%,-50%)' }} />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <img src="/logo.png" alt="" className="h-8 w-8 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
+              <span className="text-[11px] font-bold tracking-widest opacity-70 uppercase">Karma Foundation</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              NGO Analytics & Insights
+            </h2>
+            <p className="opacity-70 text-sm">Comprehensive overview of operations across all villages.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 text-center">
+              <p className="text-2xl font-black">{programs.filter(p => p.status === "Ongoing").length}</p>
+              <p className="text-[11px] opacity-70 font-medium mt-0.5">Active Programs</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 text-center">
+              <p className="text-2xl font-black">{events.filter(e => e.status === "Upcoming").length}</p>
+              <p className="text-[11px] opacity-70 font-medium mt-0.5">Upcoming Events</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 text-center">
+              <p className="text-2xl font-black">{children.filter(c => c.riskLevel === "High").length}</p>
+              <p className="text-[11px] opacity-70 font-medium mt-0.5">High Risk Kids</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {kpiCards.map((card, idx) => (
+          <motion.div key={idx} variants={item}>
+            <div
+              className="relative overflow-hidden rounded-2xl p-4 group cursor-default transition-all duration-300 hover:-translate-y-1"
+              style={{
+                ...glassCard,
+                boxShadow: '0 4px 20px rgba(11,108,196,0.06)'
+              }}
+            >
+              <div
+                className="absolute -right-4 -top-4 h-16 w-16 rounded-full opacity-20 group-hover:scale-125 transition-transform duration-500"
+                style={{ background: card.gradient }}
+              />
+              <div
+                className="h-9 w-9 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: card.lightBg }}
+              >
+                <card.icon size={18} style={{ color: card.gradient.includes('10b981') ? '#10b981' : card.gradient.includes('F28C28') ? '#F28C28' : card.gradient.includes('a78bfa') ? '#a78bfa' : card.gradient.includes('f472b6') ? '#f472b6' : card.gradient.includes('D92B2B') ? '#D92B2B' : '#0B6CC4' }} />
+              </div>
+              <p className="text-2xl font-black text-slate-800 mb-0.5" style={{ fontFamily: 'Outfit, sans-serif' }}>{card.value}</p>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-tight">{card.label}</p>
+              <span className="inline-block mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{card.change}</span>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* 12. NGO Impact Summary (Large KPI Cards) */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <motion.div variants={item}>
-          <StatCard 
-            title="Children Monitored" 
-            value={totalChildren} 
-            icon={<Users size={20} />} 
-            bgIcon={<Users />}
-            color="primary"
-            className="border-primary/20 shadow-sm" 
-          />
-        </motion.div>
-        <motion.div variants={item}>
-          <StatCard 
-            title="Villages Reached" 
-            value={totalVillages} 
-            icon={<MapPin size={20} />} 
-            bgIcon={<MapPin />}
-            color="indigo"
-            className="border-indigo-200/50 shadow-sm" 
-          />
-        </motion.div>
-        <motion.div variants={item}>
-          <StatCard 
-            title="Food Distributed" 
-            value={totalFoodDist} 
-            icon={<Box size={20} />} 
-            bgIcon={<Box />}
-            color="green"
-            className="border-emerald-200/50 shadow-sm" 
-            description="Units"
-          />
-        </motion.div>
-        <motion.div variants={item}>
-          <StatCard 
-            title="Field Workers" 
-            value={totalWorkers} 
-            icon={<ShieldCheck size={20} />} 
-            bgIcon={<ShieldCheck />}
-            color="orange"
-            className="border-orange-200/50 shadow-sm" 
-          />
-        </motion.div>
-      </div>
+      {/* SVG Gradients */}
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
+        <defs>
+          <linearGradient id="gradPrimary" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#0B6CC4" stopOpacity={0.7}/>
+            <stop offset="95%" stopColor="#5DBCEB" stopOpacity={0.1}/>
+          </linearGradient>
+          <linearGradient id="gradAccent" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#F28C28" stopOpacity={0.7}/>
+            <stop offset="95%" stopColor="#F9C642" stopOpacity={0.1}/>
+          </linearGradient>
+        </defs>
+      </svg>
 
-      {/* Grid of 11 Charts */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        
-        {/* SVG Gradients for Charts */}
-        <svg width="0" height="0">
-          <defs>
-            <linearGradient id="colorPrimary" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.Primary} stopOpacity={0.8}/>
-              <stop offset="95%" stopColor={COLORS.Primary} stopOpacity={0.2}/>
-            </linearGradient>
-            <linearGradient id="colorAccent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.Accent} stopOpacity={0.8}/>
-              <stop offset="95%" stopColor={COLORS.Accent} stopOpacity={0.2}/>
-            </linearGradient>
-            <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.Success} stopOpacity={0.5}/>
-              <stop offset="95%" stopColor={COLORS.Success} stopOpacity={0.05}/>
-            </linearGradient>
-          </defs>
-        </svg>
+      {/* Charts Row */}
+      <div className="grid gap-5 grid-cols-1 lg:grid-cols-5">
 
-        {/* 4. Food Distribution Trend (LARGE WIDE) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-4">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">4. Food Dist. Trend (Units)</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[320px]">
+        {/* Food Distribution Trend - Wide */}
+        <motion.div variants={item} className="lg:col-span-3">
+          <div style={glassCard} className="p-5 h-full">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Outfit, sans-serif' }}>Food Distribution Trend</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Units distributed over time</p>
+              </div>
+              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">All Villages</span>
+            </div>
+            <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={foodTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{fontSize: 12, fill: '#64748b', fontWeight: 500}} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} dx={-10} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }} />
-                  <Area type="monotone" dataKey="quantity" stroke={COLORS.Success} strokeWidth={4} fill="url(#colorSuccess)" activeDot={{r: 8, strokeWidth: 0}} />
+                <AreaChart data={foodTrendData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorFoodFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0B6CC4" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#5DBCEB" stopOpacity={0.02}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 500 }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} dx={-5} />
+                  <RechartsTooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="quantity"
+                    name="Units"
+                    stroke="#0B6CC4"
+                    strokeWidth={3}
+                    fill="url(#colorFoodFill)"
+                    dot={false}
+                    activeDot={{ r: 6, fill: '#0B6CC4', strokeWidth: 3, stroke: '#fff' }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
 
-        {/* 1. Children by District (MEDIUM WIDE) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">1. Children by District</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[280px]">
+        {/* Children by District - Narrow */}
+        <motion.div variants={item} className="lg:col-span-2">
+          <div style={glassCard} className="p-5 h-full">
+            <div className="mb-4">
+              <h3 className="font-bold text-slate-800" style={{ fontFamily: 'Outfit, sans-serif' }}>Children by District</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Distribution across districts</p>
+            </div>
+            <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={childrenByDistrict} margin={{ left: -20 }}>
-                  <XAxis dataKey="name" tick={{fontSize: 11, fill: '#64748b'}} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis tick={{fontSize: 11, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Bar dataKey="count" fill="url(#colorPrimary)" radius={[8,8,8,8]} barSize={28} />
+                <BarChart data={childrenByDistrict} margin={{ left: -20, right: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 500 }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <RechartsTooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Children" fill="url(#gradPrimary)" radius={[8, 8, 4, 4]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
+      </div>
 
-        {/* 2. Nutrition Status (SMALL SQUARE) */}
-        <motion.div variants={item} className="lg:col-span-1">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">2. Nutrition Status</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={nutritionData} cx="50%" cy="50%" outerRadius={85} dataKey="value" stroke="white" strokeWidth={3}>
-                    {nutritionData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b', paddingTop: '10px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 3. Vaccination Status (SMALL SQUARE DONUT) */}
-        <motion.div variants={item} className="lg:col-span-1">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">3. Vaccination Status</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={vaxData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" stroke="white" strokeWidth={2} paddingAngle={2}>
-                    {vaxData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b', paddingTop: '10px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 5. Program Progress Overview (MEDIUM WIDE TALL) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">5. Program Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={progData} layout="vertical" margin={{ left: -10, right: 20 }}>
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" tick={{fontSize: 12, fill: '#64748b', fontWeight: 500}} width={80} axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Bar dataKey="value" radius={[12,12,12,12]} barSize={20} background={{ fill: '#f1f5f9', radius: 12 }}>
-                    {progData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 6. Coordinator Performance (MEDIUM WIDE TALL) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">6. Coordinator Impact (Kids)</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={coordData} layout="vertical" margin={{ left: -10, right: 20 }}>
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" tick={{fontSize: 12, fill: '#64748b', fontWeight: 500}} width={60} axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Bar dataKey="children" fill="url(#colorAccent)" radius={[12,12,12,12]} barSize={20} background={{ fill: '#f1f5f9', radius: 12 }} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 7. Worker Category Distribution (WIDE SHORT) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">7. Worker Roles</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={workerCatData} cx="50%" cy="50%" outerRadius={80} dataKey="value" labelLine={false} label={({name, percent}) => percent && percent > 0.05 ? name : ''} stroke="none" paddingAngle={2}>
-                    {workerCatData.map((e, i) => <Cell key={i} fill={workerColors[i % workerColors.length]} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 8. Village Risk Level (WIDE SHORT DONUT) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">8. Village Risk Levels</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={villageRiskData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" stroke="white" strokeWidth={3}>
-                    {villageRiskData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b' }} layout="vertical" verticalAlign="middle" align="right" />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 9. Follow-Up Completion (SMALL GAUGE) */}
-        <motion.div variants={item} className="lg:col-span-1">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-0 text-center">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">9. Follow-ups</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[180px] relative flex flex-col items-center justify-center pt-6">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={visitGaugeData} cx="50%" cy="85%" startAngle={180} endAngle={0} innerRadius={65} outerRadius={85} dataKey="value" stroke="none" cornerRadius={10}>
-                    {visitGaugeData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute bottom-4 flex flex-col items-center">
-                <span className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{visitRate}%</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Completed</span>
+      {/* Map */}
+      <motion.div variants={item}>
+        <div style={glassCard} className="overflow-hidden">
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(11,108,196,0.1)' }}>
+                <MapPin size={16} style={{ color: '#0B6CC4' }} />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 10. Inventory Health (SMALL GAUGE) */}
-        <motion.div variants={item} className="lg:col-span-1">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-0 text-center">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">10. Inventory</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[180px] relative flex flex-col items-center justify-center pt-6">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={invGaugeData} cx="50%" cy="85%" startAngle={180} endAngle={0} innerRadius={65} outerRadius={85} dataKey="value" stroke="none" cornerRadius={10}>
-                    {invGaugeData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute bottom-4 flex flex-col items-center">
-                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{invRate}%</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">In Stock</span>
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>Village Coverage & Risk Map</h3>
+                <p className="text-xs text-slate-500">Click markers to view village details</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            {/* Risk legend */}
+            <div className="hidden md:flex items-center gap-3">
+              {[
+                { label: "High Risk", color: "#D92B2B" },
+                { label: "Medium Risk", color: "#F9C642" },
+                { label: "Low Risk", color: "#0B6CC4" },
+              ].map(l => (
+                <div key={l.label} className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
+                  <span className="text-[11px] font-medium text-slate-600">{l.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="h-[380px] relative z-0">
+            {villages.length > 0 ? (
+              <MapComponent
+                markers={mapMarkers}
+                center={[villages[0].lat, villages[0].lng]}
+                zoom={7}
+                className="h-full w-full"
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400">No villages configured</div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Bottom Row: Recent Activity + Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Recent Events */}
+        <motion.div variants={item}>
+          <div style={glassCard} className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Recent Events</h3>
+            <div className="space-y-3">
+              {events.slice(0, 4).map(e => (
+                <div key={e.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div
+                    className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-white text-xs font-bold"
+                    style={{ background: e.status === "Completed" ? 'linear-gradient(135deg,#10b981,#34d399)' : e.status === "Upcoming" ? 'linear-gradient(135deg,#0B6CC4,#5DBCEB)' : 'linear-gradient(135deg,#F28C28,#F9C642)' }}
+                  >
+                    {e.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">{e.name}</p>
+                    <p className="text-[11px] text-slate-500">{e.location} · {new Date(e.date).toLocaleDateString()}</p>
+                  </div>
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                    style={{
+                      background: e.status === "Completed" ? 'rgba(16,185,129,0.1)' : e.status === "Upcoming" ? 'rgba(11,108,196,0.1)' : 'rgba(242,140,40,0.1)',
+                      color: e.status === "Completed" ? '#065f46' : e.status === "Upcoming" ? '#1e40af' : '#92400e'
+                    }}
+                  >
+                    {e.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
-        {/* 11. Event Participation Trend (MEDIUM LINE) */}
-        <motion.div variants={item} className="md:col-span-2 lg:col-span-2">
-          <Card className="h-full shadow-sm k-card-border k-card-bg backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">11. Event Participation</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={eventTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{fontSize: 11, fill: '#64748b'}} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis tick={{fontSize: 11, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Line type="monotone" dataKey="attendees" stroke={COLORS.Primary} strokeWidth={4} fill={COLORS.Primary} dot={{r: 4, strokeWidth: 0, fill: COLORS.Primary}} activeDot={{r: 8}} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Risk Summary */}
+        <motion.div variants={item}>
+          <div style={glassCard} className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Child Risk Summary</h3>
+            <div className="space-y-4">
+              {[
+                { label: "High Risk", count: children.filter(c => c.riskLevel === "High").length, total: children.length, color: "#D92B2B", bg: "rgba(217,43,43,0.1)" },
+                { label: "Medium Risk", count: children.filter(c => c.riskLevel === "Medium").length, total: children.length, color: "#F9C642", bg: "rgba(249,198,66,0.15)" },
+                { label: "Low Risk", count: children.filter(c => c.riskLevel === "Low").length, total: children.length, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+              ].map(r => (
+                <div key={r.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full" style={{ background: r.color }} />
+                      <span className="text-sm font-semibold text-slate-700">{r.label}</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">{r.count} <span className="text-slate-400 font-normal">/ {r.total}</span></span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden bg-slate-100">
+                    <motion.div
+                      className="h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: r.total > 0 ? `${(r.count / r.total) * 100}%` : 0 }}
+                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                      style={{ background: r.color }}
+                    />
+                  </div>
+                </div>
+              ))}
 
+              <div className="pt-3 mt-1" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">Inventory Status</h4>
+                {[
+                  { label: "In Stock", count: inventory.filter(i => i.status === "In Stock").length, color: "#10b981" },
+                  { label: "Low Stock", count: inventory.filter(i => i.status === "Low Stock").length, color: "#F9C642" },
+                  { label: "Out of Stock", count: inventory.filter(i => i.status === "Out of Stock").length, color: "#D92B2B" },
+                ].map(s => (
+                  <div key={s.label} className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-slate-600">{s.label}</span>
+                    <Badge
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full border-0"
+                      style={{ background: `${s.color}18`, color: s.color }}
+                    >
+                      {s.count}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );

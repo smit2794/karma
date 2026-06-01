@@ -37,6 +37,10 @@ interface AppState {
   activities: Activity[];
   programs: Program[];
   events: NgoEvent[];
+  
+  // Actions
+  addChild: (child: Child) => void;
+  addProgram: (program: Program) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -48,12 +52,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [coordinators] = useState<Coordinator[]>(mockCoordinators);
   const [workers] = useState<Worker[]>(mockWorkers);
   const [villages] = useState<Village[]>(mockVillages);
-  const [childrenData] = useState<Child[]>(mockChildren);
+  const [childrenData, setChildrenData] = useState<Child[]>(mockChildren);
   const [inventory] = useState<InventoryItem[]>(mockInventory);
   const [foodDistribution] = useState<FoodDistribution[]>(mockFoodDistribution);
   const [activities] = useState<Activity[]>(mockActivities);
-  const [programs] = useState<Program[]>(mockPrograms);
+  const [programsData, setProgramsData] = useState<Program[]>(mockPrograms);
   const [events] = useState<NgoEvent[]>(mockEvents);
+
+  const addChild = (child: Child) => {
+    setChildrenData(prev => [child, ...prev]);
+  };
+
+  const addProgram = (program: Program) => {
+    setProgramsData(prev => [program, ...prev]);
+  };
 
   return (
     <AppContext.Provider
@@ -69,8 +81,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         inventory,
         foodDistribution,
         activities,
-        programs,
+        programs: programsData,
         events,
+        addChild,
+        addProgram,
       }}
     >
       {children}

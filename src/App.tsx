@@ -12,6 +12,7 @@ import FoodDistributionPage from "./pages/admin/FoodDistributionPage";
 import CoordinatorsPage from "./pages/admin/CoordinatorsPage";
 import WorkersPage from "./pages/admin/WorkersPage";
 import EventsPage from "./pages/admin/EventsPage";
+import AnalysisPage from "./pages/admin/AnalysisPage";
 import AddChildPage from "./pages/coordinator/AddChildPage";
 
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: "admin" | "coordinator" }) => {
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="coordinators" element={<CoordinatorsPage />} />
         <Route path="workers" element={<WorkersPage />} />
         <Route path="events" element={<EventsPage />} />
+        <Route path="analysis" element={<AnalysisPage />} />
       </Route>
 
       {/* Coordinator Routes */}
