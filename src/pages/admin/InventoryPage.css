@@ -1,0 +1,19 @@
+/* InventoryPage.css */
+
+.k-page-bg { background-color: #F8FAFC !important; }
+
+.k-text-primary { color: #0B6CC4 !important; }
+.k-bg-primary-soft { background-color: rgba(11, 108, 196, 0.1) !important; }
+.k-bg-primary-hover:hover { background-color: rgba(11, 108, 196, 0.2) !important; }
+
+.k-text-warning { color: #F9C642 !important; }
+.k-bg-warning-soft { background-color: rgba(249, 198, 66, 0.2) !important; }
+.k-bg-warning-hover:hover { background-color: rgba(249, 198, 66, 0.3) !important; }
+.k-border-warning { border-color: rgba(249, 198, 66, 0.3) !important; }
+
+.k-text-destructive { color: #D92B2B !important; }
+.k-bg-destructive-soft { background-color: rgba(217, 43, 43, 0.1) !important; }
+.k-bg-destructive-hover:hover { background-color: rgba(217, 43, 43, 0.2) !important; }
+.k-border-destructive { border-color: rgba(217, 43, 43, 0.3) !important; }
+
+.k-text-muted { color: #64748b !important; }

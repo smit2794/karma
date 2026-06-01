@@ -1,0 +1,17 @@
+/* WorkersPage.css */
+
+.k-page-bg { background-color: #F8FAFC !important; }
+
+.k-text-primary { color: #0B6CC4 !important; }
+.k-bg-primary-soft { background-color: rgba(11, 108, 196, 0.1) !important; }
+.k-bg-primary-hover:hover { background-color: rgba(11, 108, 196, 0.2) !important; }
+
+.k-text-secondary { color: #5DBCEB !important; }
+.k-bg-secondary-soft { background-color: rgba(93, 188, 235, 0.1) !important; }
+.k-border-secondary { border-color: rgba(93, 188, 235, 0.3) !important; }
+
+.k-text-muted { color: #64748b !important; }
+
+.k-bg-gradient-secondary-soft {
+  background-image: linear-gradient(to right, rgba(93, 188, 235, 0.1), rgba(93, 188, 235, 0.05)) !important;
+}

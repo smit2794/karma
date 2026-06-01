@@ -1,0 +1,46 @@
+/* AdminDashboard.css */
+
+.k-page-bg {
+  background-color: #F8FAFC !important;
+}
+
+.k-text-primary {
+  color: #0B6CC4 !important;
+}
+
+.k-text-secondary {
+  color: #5DBCEB !important;
+}
+
+.k-text-accent {
+  color: #F28C28 !important;
+}
+
+.k-text-warning {
+  color: #F9C642 !important;
+}
+
+.k-text-destructive {
+  color: #D92B2B !important;
+}
+
+/* Base structural colors if needed to override */
+.k-text-muted {
+  color: #64748b !important;
+}
+
+.k-card-bg {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.dark .k-card-bg {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+.k-card-border {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.dark .k-card-border {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
